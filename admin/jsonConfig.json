@@ -1,0 +1,84 @@
+{
+  "type": "tabs",
+  "items": {
+    "tab_rules": {
+      "type": "tab",
+      "label": "Umrechnungsregeln",
+      "items": {
+        "rules": {
+          "type": "table",
+          "label": "Regeln",
+          "showSecondAddAt": 5,
+          "items": {
+            "enabled": {
+              "type": "checkbox",
+              "label": "Aktiv",
+              "width": "60px",
+              "default": true
+            },
+            "sourceId": {
+              "type": "text",
+              "label": "Quell-State-ID",
+              "placeholder": "z.B. hm-rpc.0.ABC123.1.TEMPERATURE",
+              "width": "25%",
+              "trim": true
+            },
+            "conversion": {
+              "type": "select",
+              "label": "Umrechnung",
+              "width": "20%",
+              "default": "custom",
+              "options": [
+                { "value": "wh_kwh",               "label": "Wh → kWh" },
+                { "value": "kwh_wh",               "label": "kWh → Wh" },
+                { "value": "w_kw",                 "label": "W → kW" },
+                { "value": "kw_w",                 "label": "kW → W" },
+                { "value": "fahrenheit_celsius",   "label": "°F → °C" },
+                { "value": "celsius_fahrenheit",   "label": "°C → °F" },
+                { "value": "kelvin_celsius",       "label": "K → °C" },
+                { "value": "celsius_kelvin",       "label": "°C → K" },
+                { "value": "ms_kmh",               "label": "m/s → km/h" },
+                { "value": "kmh_ms",               "label": "km/h → m/s" },
+                { "value": "percent_fraction",     "label": "% → 0–1" },
+                { "value": "fraction_percent",     "label": "0–1 → %" },
+                { "value": "custom",               "label": "Eigene Formel" }
+              ]
+            },
+            "customFormula": {
+              "type": "text",
+              "label": "Eigene Formel (JS, Variable: value)",
+              "placeholder": "z.B. value * 0.001 oder Math.round(value)",
+              "width": "25%",
+              "trim": true,
+              "hidden": "data.conversion !== 'custom'"
+            },
+            "targetId": {
+              "type": "text",
+              "label": "Ziel-State-ID (relativ)",
+              "placeholder": "z.B. converted.temperature",
+              "width": "20%",
+              "trim": true
+            },
+            "unit": {
+              "type": "text",
+              "label": "Einheit",
+              "placeholder": "z.B. kWh",
+              "width": "10%",
+              "trim": true
+            }
+          }
+        }
+      }
+    },
+    "tab_info": {
+      "type": "tab",
+      "label": "Info",
+      "items": {
+        "info_text": {
+          "type": "staticText",
+          "text": "ioBroker Changer liest States aus beliebigen Adaptern, rechnet sie nach einer konfigurierten Formel um und schreibt den Wert als neuen State in die Adapter-Instanz.\n\nBeispiel: Quell-State 'hm-rpc.0.ABC.1.ENERGY' (Wh), Umrechnung 'Wh → kWh', Ziel-State 'converted.energy' → erzeugt den State 'changer.0.converted.energy' mit dem Wert in kWh.\n\nBei 'Eigene Formel' steht die Variable 'value' für den Eingangswert. Erlaubte JS-Ausdrücke: Arithmetik, Math.*-Funktionen, ternäre Operatoren.\n\nBeispiele für eigene Formeln:\n  value / 1000\n  Math.round(value * 10) / 10\n  value > 0 ? value : 0"
+        }
+      }
+    }
+  }
+}

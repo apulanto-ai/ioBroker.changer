@@ -1,0 +1,33 @@
+{
+  "name": "iobroker.changer",
+  "version": "0.1.0",
+  "description": "ioBroker adapter to transform and convert state values using configurable formulas",
+  "author": {
+    "name": "apulanto",
+    "email": "apulanto@protonmail.com"
+  },
+  "homepage": "https://github.com/apulanto/iobroker-changer",
+  "license": "MIT",
+  "keywords": [
+    "ioBroker",
+    "iobroker",
+    "adapter",
+    "convert",
+    "transform",
+    "formula"
+  ],
+  "main": "main.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"No tests configured\" && exit 0"
+  },
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.2.3"
+  },
+  "devDependencies": {
+    "@iobroker/testing": "^5.0.0"
+  }
+}

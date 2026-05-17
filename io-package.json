@@ -1,0 +1,50 @@
+{
+  "common": {
+    "name": "changer",
+    "version": "0.1.0",
+    "news": {
+      "0.1.0": {
+        "en": "Initial release",
+        "de": "Erstveröffentlichung"
+      }
+    },
+    "title": "ioBroker Changer",
+    "titleLang": {
+      "en": "ioBroker Changer – Convert State Values",
+      "de": "ioBroker Changer – Werte umrechnen"
+    },
+    "desc": {
+      "en": "Reads ioBroker states, applies a configurable conversion formula, and writes the result to a new state. Supports predefined unit conversions (Wh→kWh, °F→°C, …) and custom JavaScript expressions.",
+      "de": "Liest ioBroker-States, wendet eine konfigurierbare Umrechnungsformel an und schreibt das Ergebnis in einen neuen State. Unterstützt vordefinierte Einheitenumrechnungen (Wh→kWh, °F→°C, …) sowie eigene JavaScript-Ausdrücke."
+    },
+    "authors": [
+      "apulanto <apulanto@protonmail.com>"
+    ],
+    "keywords": [
+      "convert",
+      "transform",
+      "formula",
+      "unit",
+      "calculation"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "",
+    "enabled": true,
+    "extIcon": "",
+    "readme": "https://github.com/apulanto/iobroker-changer/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "general",
+    "compact": false,
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [],
+    "globalDependencies": []
+  },
+  "native": {},
+  "objects": [],
+  "instanceObjects": []
+}
