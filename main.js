@@ -54,7 +54,7 @@ class Changer extends utils.Adapter {
     // ── Umrechnung ────────────────────────────────────────────────────────────
 
     async _ensureTargetObject(rule) {
-        await this.setObjectNotExistsAsync(rule.targetId, {
+        await this.extendObjectAsync(rule.targetId, {
             type: 'state',
             common: {
                 name:  `Umgerechnet: ${rule.sourceId}`,
@@ -83,9 +83,21 @@ class Changer extends utils.Adapter {
                     this.log.warn(`Regel "${rule.targetId}": Eigene Formel ist leer.`);
                     return null;
                 }
-                const fn = new Function('value', 'Math', `"use strict"; return (${rule.customFormula});`);
-                const result = fn(value, Math);
-                if (typeof result !== 'number' || !isFinite(result)) {
+                let fn;
+                try {
+                    fn = new Function('value', 'Math', `"use strict"; return (${rule.customFormula});`);
+                } catch (syntaxErr) {
+                    this.log.error(`Regel "${rule.targetId}": Syntaxfehler in Formel "${rule.customFormula}": ${syntaxErr.message}`);
+                    return null;
+                }
+                let result;
+                try {
+                    result = fn(value, Math);
+                } catch (runtimeErr) {
+                    this.log.error(`Regel "${rule.targetId}": Laufzeitfehler in Formel "${rule.customFormula}": ${runtimeErr.message}`);
+                    return null;
+                }
+                if (typeof result !== 'number' || !isFinite(result) || isNaN(result)) {
                     this.log.warn(`Regel "${rule.targetId}": Formel lieferte keinen gültigen Zahlenwert: ${result}`);
                     return null;
                 }
@@ -112,7 +124,7 @@ class Changer extends utils.Adapter {
             return;
         }
 
-        await this.setObjectNotExistsAsync(cfg.vpdTargetId, {
+        await this.extendObjectAsync(cfg.vpdTargetId, {
             type: 'state',
             common: {
                 name:  'VPD (Sättigungsdefizit)',
