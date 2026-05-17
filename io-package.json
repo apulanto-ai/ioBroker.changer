@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "changer",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "news": {
+      "0.2.1": {
+        "en": "Searchable state picker in admin UI",
+        "de": "Durchsuchbarer State-Picker in der Admin-Oberfläche"
+      },
       "0.2.0": {
         "en": "Added VPD calculation tab",
         "de": "VPD-Berechnung hinzugefügt"
