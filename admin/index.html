@@ -11,45 +11,95 @@
         /* ── Tabs ── */
         .tab-nav { display: flex; border-bottom: 2px solid #1976d2; margin-bottom: 14px; }
         .tab-btn {
-            padding: 8px 20px; cursor: pointer; border: none; background: #f0f0f0;
-            border-radius: 4px 4px 0 0; margin-right: 4px; font-size: 14px;
-            border: 1px solid #ccc; border-bottom: none; color: #444;
+            padding: 8px 20px; cursor: pointer; border: 1px solid #ccc;
+            border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 4px;
+            font-size: 14px; background: #f0f0f0; color: #444;
         }
         .tab-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* ── Regeln-Tabelle ── */
+        /* ── Allgemein ── */
         h2 { font-size: 15px; margin: 0 0 8px; }
+        .hint { font-size: 12px; color: #666; margin: 6px 0; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: middle; }
         th { background: #f5f5f5; font-weight: bold; text-align: left; }
         tr:nth-child(even) { background: #fafafa; }
-        select, input[type=text] { width: 100%; box-sizing: border-box; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; }
-        input[type=checkbox] { width: auto; cursor: pointer; }
-        .btn { padding: 5px 12px; cursor: pointer; border-radius: 3px; border: 1px solid #888; background: #e8e8e8; margin: 2px; }
-        .btn-add { background: #4caf50; color: #fff; border-color: #388e3c; }
-        .btn-del { background: #f44336; color: #fff; border-color: #c62828; padding: 2px 8px; }
+        select { width: 100%; box-sizing: border-box; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; }
+        input[type=text] { box-sizing: border-box; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; }
+        input[type=checkbox] { cursor: pointer; }
+        .btn { padding: 5px 12px; cursor: pointer; border-radius: 3px; border: 1px solid #888; background: #e8e8e8; }
+        .btn-add  { background: #4caf50; color: #fff; border-color: #388e3c; }
+        .btn-del  { background: #f44336; color: #fff; border-color: #c62828; padding: 2px 8px; }
+        .btn-pick { background: #1976d2; color: #fff; border-color: #1565c0; padding: 3px 8px; white-space: nowrap; flex-shrink: 0; }
         .row-actions { text-align: center; }
-        #btn-add-row { margin-top: 8px; }
-        .hint { font-size: 12px; color: #666; margin: 6px 0; }
+
+        /* State-Eingabe mit Pick-Button nebeneinander */
+        .state-input-wrap { display: flex; gap: 4px; }
+        .state-input-wrap input { flex: 1; min-width: 0; }
 
         /* ── VPD-Tab ── */
-        .vpd-form { max-width: 560px; }
-        .vpd-form table { width: 100%; }
-        .vpd-form td:first-child { width: 180px; font-weight: bold; white-space: nowrap; }
-        .vpd-form td input[type=text] { padding: 4px 6px; }
+        .vpd-form table { max-width: 600px; }
+        .vpd-form td:first-child { width: 200px; font-weight: bold; white-space: nowrap; }
         .vpd-info {
-            background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px;
-            padding: 10px 14px; margin-top: 14px; font-size: 13px; line-height: 1.6;
+            max-width: 600px; background: #e3f2fd; border: 1px solid #90caf9;
+            border-radius: 4px; padding: 10px 14px; margin-top: 14px;
+            font-size: 13px; line-height: 1.7;
         }
         .vpd-info code { background: #fff; padding: 1px 4px; border-radius: 3px; font-family: monospace; }
+
+        /* ── State-Picker Modal ── */
+        #picker-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        #picker-overlay.open { display: flex; }
+        #picker-dialog {
+            background: #fff; border-radius: 6px; padding: 16px;
+            width: 580px; max-width: 92vw; max-height: 80vh;
+            display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+        #picker-title { margin: 0 0 10px; font-size: 15px; font-weight: bold; }
+        #picker-search {
+            width: 100%; box-sizing: border-box; padding: 7px 10px;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;
+        }
+        #picker-count { font-size: 12px; color: #888; margin-bottom: 6px; }
+        #picker-list {
+            flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;
+            list-style: none; margin: 0; padding: 0; min-height: 120px;
+        }
+        #picker-list li {
+            padding: 5px 10px; cursor: pointer;
+            border-bottom: 1px solid #f0f0f0; font-family: monospace; font-size: 13px;
+        }
+        #picker-list li:last-child { border-bottom: none; }
+        #picker-list li:hover { background: #e3f2fd; }
+        #picker-list li.empty { color: #999; cursor: default; font-family: inherit; }
+        #picker-footer { margin-top: 10px; text-align: right; }
+        #picker-loading { color: #888; font-style: italic; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
+
+<!-- ══════════════ State-Picker Modal ══════════════ -->
+<div id="picker-overlay">
+    <div id="picker-dialog">
+        <div id="picker-title">State auswählen</div>
+        <input type="text" id="picker-search" placeholder="Filtern… (z.B. hm-rpc, temperature, 0.TEMP)" autocomplete="off" />
+        <div id="picker-count"></div>
+        <ul id="picker-list"><li id="picker-loading">States werden geladen…</li></ul>
+        <div id="picker-footer">
+            <button class="btn" id="picker-cancel">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Haupt-UI ══════════════ -->
 <div id="wrapper">
 
-    <!-- Tab-Navigation -->
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="rules">Umrechnungsregeln</button>
         <button class="tab-btn"        data-tab="vpd">VPD Berechnung</button>
@@ -58,30 +108,31 @@
     <!-- ── Tab 1: Umrechnungsregeln ── -->
     <div id="tab-rules" class="tab-content active">
         <h2>Umrechnungsregeln</h2>
-        <p class="hint">Jede Zeile definiert eine Umrechnung. Quell-State-ID = vollständige ioBroker-ID (z.B. <em>hm-rpc.0.ABC.1.TEMPERATURE</em>). Ziel-State-ID ist relativ zur Instanz (z.B. <em>converted.temperature</em>).</p>
+        <p class="hint">Klicke auf <strong>⋯</strong> um einen State aus dem ioBroker-Objektbaum zu wählen. Die Ziel-State-ID ist relativ zur Instanz (z.B. <em>converted.temperature</em>).</p>
 
         <table id="rules-table">
             <thead>
                 <tr>
-                    <th style="width:50px">Aktiv</th>
-                    <th>Quell-State-ID</th>
-                    <th style="width:160px">Umrechnung</th>
-                    <th>Eigene Formel</th>
-                    <th>Ziel-State-ID</th>
+                    <th style="width:46px">Aktiv</th>
+                    <th style="min-width:160px">Quell-State</th>
+                    <th style="width:150px">Umrechnung</th>
+                    <th style="min-width:120px">Eigene Formel</th>
+                    <th style="min-width:120px">Ziel-State-ID</th>
                     <th style="width:70px">Einheit</th>
-                    <th style="width:40px"></th>
+                    <th style="width:36px"></th>
                 </tr>
             </thead>
             <tbody id="rules-body"></tbody>
         </table>
-        <button class="btn btn-add" id="btn-add-row">+ Regel hinzufügen</button>
-        <p class="hint" style="margin-top:12px"><strong>Formel-Beispiele:</strong> value / 1000 &nbsp;|&nbsp; Math.round(value * 10) / 10 &nbsp;|&nbsp; value &gt; 0 ? value : 0</p>
+        <button class="btn btn-add" id="btn-add-row" style="margin-top:8px">+ Regel hinzufügen</button>
+        <p class="hint" style="margin-top:12px">
+            <strong>Formel-Beispiele:</strong> value / 1000 &nbsp;|&nbsp; Math.round(value * 10) / 10 &nbsp;|&nbsp; value &gt; 0 ? value : 0
+        </p>
     </div>
 
     <!-- ── Tab 2: VPD Berechnung ── -->
     <div id="tab-vpd" class="tab-content">
         <h2>VPD Berechnung (Vapor Pressure Deficit)</h2>
-
         <div class="vpd-form">
             <table>
                 <tr>
@@ -89,25 +140,34 @@
                     <td><input type="checkbox" id="vpd-enabled" /></td>
                 </tr>
                 <tr>
-                    <td>Temperatur-State-ID</td>
-                    <td><input type="text" id="vpd-temp" placeholder="z.B. hm-rpc.0.ABC.1.TEMPERATURE" /></td>
+                    <td>Temperatur-State</td>
+                    <td>
+                        <div class="state-input-wrap">
+                            <input type="text" id="vpd-temp" placeholder="z.B. hm-rpc.0.ABC.1.TEMPERATURE" />
+                            <button class="btn btn-pick" type="button" onclick="openPicker('vpd-temp')">⋯ Auswählen</button>
+                        </div>
+                    </td>
                 </tr>
                 <tr>
-                    <td>Luftfeuchtigkeits-State-ID</td>
-                    <td><input type="text" id="vpd-hum" placeholder="z.B. hm-rpc.0.ABC.1.HUMIDITY" /></td>
+                    <td>Luftfeuchtigkeits-State</td>
+                    <td>
+                        <div class="state-input-wrap">
+                            <input type="text" id="vpd-hum" placeholder="z.B. hm-rpc.0.ABC.1.HUMIDITY" />
+                            <button class="btn btn-pick" type="button" onclick="openPicker('vpd-hum')">⋯ Auswählen</button>
+                        </div>
+                    </td>
                 </tr>
                 <tr>
                     <td>Ziel-State-ID (relativ)</td>
-                    <td><input type="text" id="vpd-target" placeholder="z.B. vpd" /></td>
+                    <td><input type="text" id="vpd-target" placeholder="vpd" style="width:100%;max-width:220px" /></td>
                 </tr>
             </table>
-
             <div class="vpd-info">
                 <strong>Formel (Magnus-Approximation):</strong><br />
-                <code>SVP = 0,6108 · e^(17,27 · T / (T + 237,3))</code> &nbsp;[kPa]<br />
-                <code>VPD = SVP · (1 − RH / 100)</code> &nbsp;[kPa]<br /><br />
+                <code>SVP = 0,6108 · e^(17,27 · T / (T + 237,3))</code> [kPa]<br />
+                <code>VPD = SVP · (1 − RH / 100)</code> [kPa]<br /><br />
                 <strong>Eingangswerte:</strong> Temperatur in <strong>°C</strong>, Luftfeuchtigkeit in <strong>% (0–100)</strong>.<br />
-                Der berechnete VPD-State erscheint unter <em>changer.&lt;instanz&gt;.&lt;Ziel-State-ID&gt;</em> in der Einheit <strong>kPa</strong>.<br /><br />
+                Ergebnis erscheint unter <em>changer.&lt;instanz&gt;.&lt;Ziel-State-ID&gt;</em> in <strong>kPa</strong>.<br /><br />
                 <strong>Richtwerte:</strong> &lt; 0,4 kPa = zu feucht &nbsp;|&nbsp; 0,8–1,2 kPa = optimal &nbsp;|&nbsp; &gt; 1,6 kPa = Trockenstress
             </div>
         </div>
@@ -116,135 +176,315 @@
 </div><!-- /wrapper -->
 
 <script>
-    /* ───────────────────────────── Konversionen ────────────────────────────── */
-    var CONVERSIONS = [
-        { value: 'wh_kwh',             label: 'Wh → kWh' },
-        { value: 'kwh_wh',             label: 'kWh → Wh' },
-        { value: 'w_kw',               label: 'W → kW' },
-        { value: 'kw_w',               label: 'kW → W' },
-        { value: 'fahrenheit_celsius', label: '°F → °C' },
-        { value: 'celsius_fahrenheit', label: '°C → °F' },
-        { value: 'kelvin_celsius',     label: 'K → °C' },
-        { value: 'celsius_kelvin',     label: '°C → K' },
-        { value: 'ms_kmh',             label: 'm/s → km/h' },
-        { value: 'kmh_ms',             label: 'km/h → m/s' },
-        { value: 'percent_fraction',   label: '% → 0–1' },
-        { value: 'fraction_percent',   label: '0–1 → %' },
-        { value: 'custom',             label: 'Eigene Formel' }
-    ];
+/* ════════════════════════════════════════════════════
+   State-Picker
+════════════════════════════════════════════════════ */
+var _allStateIds   = [];
+var _statesLoaded  = false;
+var _pickerTarget  = null; // id-String des Ziel-Inputs
 
-    var _onChange;
+function _loadStates(cb) {
+    if (_statesLoaded) { if (cb) cb(); return; }
+    var s = (typeof socket !== 'undefined') ? socket : null;
+    if (!s) {
+        document.getElementById('picker-loading').textContent = 'Kein Socket verfügbar.';
+        return;
+    }
+    s.emit('getObjectView', 'system', 'state', { startkey: '', endkey: '香' }, function(err, res) {
+        if (!err && res && res.rows) {
+            _allStateIds  = res.rows.map(function(r) { return r.id; });
+            _allStateIds.sort();
+        }
+        _statesLoaded = true;
+        if (cb) cb();
+    });
+}
 
-    /* ───────────────────────────── Tab-Logik ───────────────────────────────── */
-    document.querySelectorAll('.tab-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-            document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-            btn.classList.add('active');
-            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-        });
+function openPicker(inputId) {
+    _pickerTarget = inputId;
+    var overlay = document.getElementById('picker-overlay');
+    overlay.classList.add('open');
+
+    var search = document.getElementById('picker-search');
+    search.value = document.getElementById(inputId).value || '';
+
+    if (!_statesLoaded) {
+        document.getElementById('picker-list').innerHTML = '<li id="picker-loading">States werden geladen…</li>';
+        _loadStates(function() { _renderList(search.value); });
+    } else {
+        _renderList(search.value);
+    }
+    setTimeout(function() { search.focus(); search.select(); }, 50);
+}
+
+function _renderList(filter) {
+    var list = document.getElementById('picker-list');
+    var f = (filter || '').toLowerCase();
+    var tokens = f.split(/\s+/).filter(Boolean);
+
+    var matches = _allStateIds.filter(function(id) {
+        if (!tokens.length) return true;
+        var lower = id.toLowerCase();
+        return tokens.every(function(t) { return lower.indexOf(t) !== -1; });
     });
 
-    /* ───────────────────────────── Regelzeile ──────────────────────────────── */
-    function buildConversionSelect(selected) {
-        var html = '<select class="conv-select">';
-        CONVERSIONS.forEach(function(c) {
-            html += '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
-        });
-        return html + '</select>';
+    var shown = matches.slice(0, 300);
+    document.getElementById('picker-count').textContent =
+        matches.length + ' State(s) gefunden' + (matches.length > 300 ? ' (erste 300 angezeigt)' : '');
+
+    list.innerHTML = '';
+    if (shown.length === 0) {
+        list.innerHTML = '<li class="empty">Keine Treffer – Suchbegriff ändern</li>';
+        return;
     }
-
-    function addRow(rule) {
-        rule = rule || { enabled: true, sourceId: '', conversion: 'custom', customFormula: '', targetId: '', unit: '' };
-        var tbody = document.getElementById('rules-body');
-        var tr = document.createElement('tr');
-        var showFormula = rule.conversion === 'custom';
-
-        tr.innerHTML =
-            '<td style="text-align:center"><input type="checkbox" class="chk-enabled"' + (rule.enabled ? ' checked' : '') + ' /></td>' +
-            '<td><input type="text" class="inp-source" placeholder="z.B. hm-rpc.0.ABC.1.TEMP" value="' + esc(rule.sourceId) + '" /></td>' +
-            '<td>' + buildConversionSelect(rule.conversion) + '</td>' +
-            '<td><input type="text" class="inp-formula" placeholder="z.B. value * 0.001" value="' + esc(rule.customFormula) + '" style="display:' + (showFormula ? 'block' : 'none') + '" /></td>' +
-            '<td><input type="text" class="inp-target" placeholder="z.B. converted.temp" value="' + esc(rule.targetId) + '" /></td>' +
-            '<td><input type="text" class="inp-unit" placeholder="kWh" value="' + esc(rule.unit) + '" /></td>' +
-            '<td class="row-actions"><button class="btn btn-del" type="button">✕</button></td>';
-
-        tbody.appendChild(tr);
-
-        var convSel    = tr.querySelector('.conv-select');
-        var formulaInp = tr.querySelector('.inp-formula');
-
-        convSel.addEventListener('change', function() {
-            formulaInp.style.display = this.value === 'custom' ? 'block' : 'none';
-            notify();
+    shown.forEach(function(id) {
+        var li = document.createElement('li');
+        li.textContent = id;
+        li.addEventListener('click', function() {
+            if (_pickerTarget) {
+                var inp = document.getElementById(_pickerTarget);
+                inp.value = id;
+                inp.dispatchEvent(new Event('input', { bubbles: true }));
+                notify();
+            }
+            _closePicker();
         });
-        tr.querySelector('.btn-del').addEventListener('click', function() {
-            tbody.removeChild(tr);
-            notify();
-        });
-        tr.querySelectorAll('input, select').forEach(function(el) {
-            el.addEventListener('change', notify);
-            el.addEventListener('input',  notify);
-        });
-    }
+        list.appendChild(li);
+    });
+}
 
-    function esc(s) {
-        return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+function _closePicker() {
+    document.getElementById('picker-overlay').classList.remove('open');
+    _pickerTarget = null;
+}
 
-    function notify() { if (_onChange) _onChange(); }
+document.getElementById('picker-search').addEventListener('input', function() { _renderList(this.value); });
+document.getElementById('picker-cancel').addEventListener('click', _closePicker);
+document.getElementById('picker-overlay').addEventListener('click', function(e) {
+    if (e.target === this) _closePicker();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') _closePicker(); });
 
-    function getRules() {
-        var rules = [];
-        document.querySelectorAll('#rules-body tr').forEach(function(tr) {
-            rules.push({
-                enabled:       tr.querySelector('.chk-enabled').checked,
-                sourceId:      tr.querySelector('.inp-source').value.trim(),
-                conversion:    tr.querySelector('.conv-select').value,
-                customFormula: tr.querySelector('.inp-formula').value.trim(),
-                targetId:      tr.querySelector('.inp-target').value.trim(),
-                unit:          tr.querySelector('.inp-unit').value.trim()
-            });
-        });
-        return rules;
-    }
+/* ════════════════════════════════════════════════════
+   Tabs
+════════════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
 
-    document.getElementById('btn-add-row').addEventListener('click', function() { addRow(); notify(); });
+/* ════════════════════════════════════════════════════
+   Konversionsregeln
+════════════════════════════════════════════════════ */
+var CONVERSIONS = [
+    { value: 'wh_kwh',             label: 'Wh → kWh' },
+    { value: 'kwh_wh',             label: 'kWh → Wh' },
+    { value: 'w_kw',               label: 'W → kW' },
+    { value: 'kw_w',               label: 'kW → W' },
+    { value: 'fahrenheit_celsius', label: '°F → °C' },
+    { value: 'celsius_fahrenheit', label: '°C → °F' },
+    { value: 'kelvin_celsius',     label: 'K → °C' },
+    { value: 'celsius_kelvin',     label: '°C → K' },
+    { value: 'ms_kmh',             label: 'm/s → km/h' },
+    { value: 'kmh_ms',             label: 'km/h → m/s' },
+    { value: 'percent_fraction',   label: '% → 0–1' },
+    { value: 'fraction_percent',   label: '0–1 → %' },
+    { value: 'custom',             label: 'Eigene Formel' }
+];
 
-    /* VPD-Felder onChange */
-    ['vpd-enabled','vpd-temp','vpd-hum','vpd-target'].forEach(function(id) {
-        var el = document.getElementById(id);
+var _onChange;
+function notify() { if (_onChange) _onChange(); }
+
+function _buildSelect(selected) {
+    return '<select class="conv-select">' +
+        CONVERSIONS.map(function(c) {
+            return '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
+        }).join('') +
+        '</select>';
+}
+
+function _esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var _rowCounter = 0;
+function addRow(rule) {
+    rule = rule || { enabled: true, sourceId: '', conversion: 'custom', customFormula: '', targetId: '', unit: '' };
+    var rid  = 'row-' + (++_rowCounter);
+    var tbody = document.getElementById('rules-body');
+    var tr    = document.createElement('tr');
+    var showF = rule.conversion === 'custom';
+
+    tr.innerHTML =
+        '<td style="text-align:center"><input type="checkbox" class="chk-enabled"' + (rule.enabled ? ' checked' : '') + ' /></td>' +
+        '<td><div class="state-input-wrap">' +
+            '<input type="text" class="inp-source" placeholder="State auswählen…" value="' + _esc(rule.sourceId) + '" />' +
+            '<button class="btn btn-pick" type="button" data-pick="source">⋯</button>' +
+        '</div></td>' +
+        '<td>' + _buildSelect(rule.conversion) + '</td>' +
+        '<td><input type="text" class="inp-formula" placeholder="value * 0.001" value="' + _esc(rule.customFormula) + '" style="width:100%;display:' + (showF ? 'block' : 'none') + '" /></td>' +
+        '<td><input type="text" class="inp-target" placeholder="converted.x" value="' + _esc(rule.targetId) + '" style="width:100%" /></td>' +
+        '<td><input type="text" class="inp-unit" placeholder="kWh" value="' + _esc(rule.unit) + '" style="width:100%" /></td>' +
+        '<td class="row-actions"><button class="btn btn-del" type="button">✕</button></td>';
+
+    tbody.appendChild(tr);
+
+    // Picker-Button für Quell-State
+    var srcInp = tr.querySelector('.inp-source');
+    tr.querySelector('[data-pick="source"]').addEventListener('click', function() {
+        _pickerTarget = null; // wird über srcInp gesetzt
+        _openPickerForInput(srcInp);
+    });
+
+    // Formel ein-/ausblenden
+    var convSel = tr.querySelector('.conv-select');
+    var frmInp  = tr.querySelector('.inp-formula');
+    convSel.addEventListener('change', function() {
+        frmInp.style.display = this.value === 'custom' ? 'block' : 'none';
+        notify();
+    });
+
+    // Löschen
+    tr.querySelector('.btn-del').addEventListener('click', function() {
+        tbody.removeChild(tr);
+        notify();
+    });
+
+    // onChange auf alle Inputs
+    tr.querySelectorAll('input, select').forEach(function(el) {
         el.addEventListener('change', notify);
         el.addEventListener('input',  notify);
     });
+}
 
-    /* ───────────────────────────── ioBroker API ────────────────────────────── */
-    function load(settings, onChange) {
-        _onChange = onChange;
-        settings = settings || {};
+// Variante: Picker direkt mit einem Input-Element (nicht per id)
+function _openPickerForInput(inputEl) {
+    _pickerTarget = '__direct__';
+    var overlay = document.getElementById('picker-overlay');
+    overlay.classList.add('open');
+    var search = document.getElementById('picker-search');
+    search.value = inputEl.value || '';
 
-        /* Regeln */
-        var tbody = document.getElementById('rules-body');
-        tbody.innerHTML = '';
-        var rules = settings.rules || [];
-        if (rules.length === 0) { addRow(); } else { rules.forEach(addRow); }
+    // Wenn Item gewählt wird, füllen wir inputEl direkt
+    document.getElementById('picker-list')._targetInput = inputEl;
 
-        /* VPD */
-        document.getElementById('vpd-enabled').checked       = !!settings.vpdEnabled;
-        document.getElementById('vpd-temp').value            = settings.vpdTempId   || '';
-        document.getElementById('vpd-hum').value             = settings.vpdHumId    || '';
-        document.getElementById('vpd-target').value          = settings.vpdTargetId || 'vpd';
+    if (!_statesLoaded) {
+        document.getElementById('picker-list').innerHTML = '<li id="picker-loading">States werden geladen…</li>';
+        _loadStates(function() { _renderListDirect(search.value, inputEl); });
+    } else {
+        _renderListDirect(search.value, inputEl);
     }
+    setTimeout(function() { search.focus(); search.select(); }, 50);
+}
 
-    function save(callback) {
-        callback({
-            rules:       getRules(),
-            vpdEnabled:  document.getElementById('vpd-enabled').checked,
-            vpdTempId:   document.getElementById('vpd-temp').value.trim(),
-            vpdHumId:    document.getElementById('vpd-hum').value.trim(),
-            vpdTargetId: document.getElementById('vpd-target').value.trim() || 'vpd'
+// Überschreibe _renderList um inputEl zu unterstützen
+var _currentDirectInput = null;
+function _renderListDirect(filter, inputEl) {
+    _currentDirectInput = inputEl || null;
+    _renderList(filter);
+}
+
+// Patch: beim Klick auf ein li den direkten Input befüllen
+(function() {
+    var origRender = _renderList;
+    _renderList = function(filter) {
+        var list = document.getElementById('picker-list');
+        var f = (filter || '').toLowerCase();
+        var tokens = f.split(/\s+/).filter(Boolean);
+        var matches = _allStateIds.filter(function(id) {
+            if (!tokens.length) return true;
+            var lower = id.toLowerCase();
+            return tokens.every(function(t) { return lower.indexOf(t) !== -1; });
         });
-    }
+        var shown = matches.slice(0, 300);
+        document.getElementById('picker-count').textContent =
+            matches.length + ' State(s) gefunden' + (matches.length > 300 ? ' (erste 300 angezeigt)' : '');
+        list.innerHTML = '';
+        if (shown.length === 0) {
+            list.innerHTML = '<li class="empty">Keine Treffer – Suchbegriff ändern</li>';
+            return;
+        }
+        shown.forEach(function(id) {
+            var li = document.createElement('li');
+            li.textContent = id;
+            li.addEventListener('click', function() {
+                var inp = _currentDirectInput || (_pickerTarget ? document.getElementById(_pickerTarget) : null);
+                if (inp) {
+                    inp.value = id;
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    notify();
+                }
+                _currentDirectInput = null;
+                _closePicker();
+            });
+            list.appendChild(li);
+        });
+    };
+})();
+
+// Picker-Search neu verdrahten nach Überschreibung
+document.getElementById('picker-search').addEventListener('input', function() { _renderList(this.value); });
+
+function getRules() {
+    var rules = [];
+    document.querySelectorAll('#rules-body tr').forEach(function(tr) {
+        rules.push({
+            enabled:       tr.querySelector('.chk-enabled').checked,
+            sourceId:      tr.querySelector('.inp-source').value.trim(),
+            conversion:    tr.querySelector('.conv-select').value,
+            customFormula: tr.querySelector('.inp-formula').value.trim(),
+            targetId:      tr.querySelector('.inp-target').value.trim(),
+            unit:          tr.querySelector('.inp-unit').value.trim()
+        });
+    });
+    return rules;
+}
+
+document.getElementById('btn-add-row').addEventListener('click', function() { addRow(); notify(); });
+
+// VPD-Felder onChange
+['vpd-enabled','vpd-temp','vpd-hum','vpd-target'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('change', notify);
+    el.addEventListener('input',  notify);
+});
+
+/* ════════════════════════════════════════════════════
+   ioBroker Adapter API
+════════════════════════════════════════════════════ */
+function load(settings, onChange) {
+    _onChange = onChange;
+    settings  = settings || {};
+
+    // States im Hintergrund vorladen
+    _loadStates();
+
+    // Regeln
+    var tbody = document.getElementById('rules-body');
+    tbody.innerHTML = '';
+    var rules = settings.rules || [];
+    if (rules.length === 0) { addRow(); } else { rules.forEach(addRow); }
+
+    // VPD
+    document.getElementById('vpd-enabled').checked  = !!settings.vpdEnabled;
+    document.getElementById('vpd-temp').value        = settings.vpdTempId   || '';
+    document.getElementById('vpd-hum').value         = settings.vpdHumId    || '';
+    document.getElementById('vpd-target').value      = settings.vpdTargetId || 'vpd';
+}
+
+function save(callback) {
+    callback({
+        rules:       getRules(),
+        vpdEnabled:  document.getElementById('vpd-enabled').checked,
+        vpdTempId:   document.getElementById('vpd-temp').value.trim(),
+        vpdHumId:    document.getElementById('vpd-hum').value.trim(),
+        vpdTargetId: document.getElementById('vpd-target').value.trim() || 'vpd'
+    });
+}
 </script>
 </body>
 </html>
