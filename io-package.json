@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "changer",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "news": {
+      "0.2.3": {
+        "en": "Load socket.io client before adapter-settings.js",
+        "de": "Socket.io-Client vor adapter-settings.js laden"
+      },
       "0.2.2": {
         "en": "Fix socket connection in admin state picker",
         "de": "Socket-Verbindung im Admin State-Picker behoben"
