@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "changer",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "news": {
+      "0.2.2": {
+        "en": "Fix socket connection in admin state picker",
+        "de": "Socket-Verbindung im Admin State-Picker behoben"
+      },
       "0.2.1": {
         "en": "Searchable state picker in admin UI",
         "de": "Durchsuchbarer State-Picker in der Admin-Oberfläche"
