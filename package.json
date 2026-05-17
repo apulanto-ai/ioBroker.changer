@@ -6,7 +6,7 @@
     "name": "apulanto",
     "email": "apulanto@protonmail.com"
   },
-  "homepage": "https://github.com/apulanto/iobroker-changer",
+  "homepage": "https://github.com/apulanto-ai/iobroker-changer",
   "license": "MIT",
   "keywords": [
     "ioBroker",
@@ -17,6 +17,11 @@
     "formula"
   ],
   "main": "main.js",
+  "files": [
+    "main.js",
+    "io-package.json",
+    "admin/"
+  ],
   "engines": {
     "node": ">=18"
   },

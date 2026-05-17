@@ -131,7 +131,8 @@ class Changer extends utils.Adapter {
 }
 
 if (require.main !== module) {
-    module.exports = options => new Changer(options);
+    // Compact mode export
+    module.exports = (options) => new Changer(options);
 } else {
     new Changer();
 }

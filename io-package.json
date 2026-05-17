@@ -30,19 +30,27 @@
     "license": "MIT",
     "platform": "Javascript/Node.js",
     "main": "main.js",
-    "icon": "",
     "enabled": true,
-    "extIcon": "",
-    "readme": "https://github.com/apulanto/iobroker-changer/blob/main/README.md",
+    "readme": "https://github.com/apulanto-ai/iobroker-changer/blob/main/README.md",
     "loglevel": "info",
     "mode": "daemon",
     "type": "general",
-    "compact": false,
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "push",
     "adminUI": {
       "config": "json"
     },
-    "dependencies": [],
-    "globalDependencies": []
+    "dependencies": [
+      {
+        "js-controller": ">=4.0.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.3.3"
+      }
+    ]
   },
   "native": {},
   "objects": [],
