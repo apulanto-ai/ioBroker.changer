@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "changer",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "Version 0.3.0",
+        "de": "Version 0.3.0"
+      },
       "0.2.8": {
         "en": "Target state picker with create-new option in admin UI",
         "de": "Ziel-State-Picker mit Neu-Anlegen-Option in der Admin-Oberfläche"
