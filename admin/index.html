@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
     <title>ioBroker Changer – Einstellungen</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 14px; margin: 0; }
@@ -183,21 +184,46 @@ var _allStateIds   = [];
 var _statesLoaded  = false;
 var _pickerTarget  = null; // id-String des Ziel-Inputs
 
+function _getSocket() {
+    // Admin v5/v6: socket global (gesetzt von adapter-settings.js)
+    try { if (typeof socket !== 'undefined' && socket) return socket; } catch(e) {}
+    // Fallback: Parent-Window-Socket
+    try { if (window.parent && window.parent.socket) return window.parent.socket; } catch(e) {}
+    try { if (window.parent && window.parent.connection) return window.parent.connection; } catch(e) {}
+    try { if (window.parent && window.parent.Main && window.parent.Main.socket) return window.parent.Main.socket; } catch(e) {}
+    // Admin v4: servConn
+    try { if (typeof servConn !== 'undefined' && servConn) return servConn; } catch(e) {}
+    return null;
+}
+
 function _loadStates(cb) {
     if (_statesLoaded) { if (cb) cb(); return; }
-    var s = (typeof socket !== 'undefined') ? socket : null;
+    var s = _getSocket();
     if (!s) {
-        document.getElementById('picker-loading').textContent = 'Kein Socket verfügbar.';
+        var li = document.getElementById('picker-loading');
+        if (li) li.textContent = 'Socket nicht gefunden – bitte Seite neu laden.';
         return;
     }
-    s.emit('getObjectView', 'system', 'state', { startkey: '', endkey: '香' }, function(err, res) {
+
+    function _handleResult(err, res) {
         if (!err && res && res.rows) {
-            _allStateIds  = res.rows.map(function(r) { return r.id; });
+            _allStateIds = res.rows.map(function(r) { return r.id; });
             _allStateIds.sort();
         }
         _statesLoaded = true;
         if (cb) cb();
-    });
+    }
+
+    // Admin v5/v6: direkte Methode auf dem Connection-Objekt
+    if (typeof s.getObjectView === 'function') {
+        s.getObjectView('system', 'state', { startkey: '', endkey: '香' }, _handleResult);
+    // Admin v4: emit-basiert
+    } else if (typeof s.emit === 'function') {
+        s.emit('getObjectView', 'system', 'state', { startkey: '', endkey: '香' }, _handleResult);
+    } else {
+        var li2 = document.getElementById('picker-loading');
+        if (li2) li2.textContent = 'Socket-API nicht erkannt.';
+    }
 }
 
 function openPicker(inputId) {
