@@ -20,7 +20,8 @@
   "files": [
     "main.js",
     "io-package.json",
-    "admin/"
+    "admin/index.html",
+    "admin/jsonConfig.json"
   ],
   "engines": {
     "node": ">=18"

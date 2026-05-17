@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+    <title>ioBroker Changer – Einstellungen</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 14px; margin: 0; }
+        #wrapper { padding: 10px; }
+        h2 { font-size: 16px; margin-bottom: 10px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: middle; }
+        th { background: #f5f5f5; font-weight: bold; text-align: left; }
+        tr:nth-child(even) { background: #fafafa; }
+        select, input[type=text] { width: 100%; box-sizing: border-box; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; }
+        input[type=checkbox] { width: auto; }
+        .btn { padding: 5px 12px; cursor: pointer; border-radius: 3px; border: 1px solid #888; background: #e8e8e8; margin: 2px; }
+        .btn-add { background: #4caf50; color: #fff; border-color: #388e3c; }
+        .btn-del { background: #f44336; color: #fff; border-color: #c62828; padding: 2px 8px; }
+        .row-actions { text-align: center; white-space: nowrap; }
+        #btn-add-row { margin-top: 8px; }
+        .formula-cell { display: none; }
+    </style>
+</head>
+<body>
+<div id="wrapper">
+    <h2>Umrechnungsregeln</h2>
+    <p style="font-size:12px;color:#666;">Jede Zeile definiert eine Umrechnung. Die Quell-State-ID muss die vollständige ioBroker-State-ID sein (z.B. <em>hm-rpc.0.ABC.1.TEMPERATURE</em>). Die Ziel-State-ID ist relativ zur Instanz (z.B. <em>converted.temperature</em>).</p>
+
+    <table id="rules-table">
+        <thead>
+            <tr>
+                <th style="width:50px">Aktiv</th>
+                <th>Quell-State-ID</th>
+                <th style="width:160px">Umrechnung</th>
+                <th>Eigene Formel</th>
+                <th>Ziel-State-ID</th>
+                <th style="width:70px">Einheit</th>
+                <th style="width:50px"></th>
+            </tr>
+        </thead>
+        <tbody id="rules-body">
+        </tbody>
+    </table>
+
+    <button class="btn btn-add" id="btn-add-row">+ Regel hinzufügen</button>
+
+    <p style="margin-top:16px;font-size:12px;color:#666;">
+        <strong>Formel-Beispiele:</strong>
+        value / 1000 &nbsp;|&nbsp;
+        Math.round(value * 10) / 10 &nbsp;|&nbsp;
+        value &gt; 0 ? value : 0
+    </p>
+</div>
+
+<script>
+    var CONVERSIONS = [
+        { value: 'wh_kwh',             label: 'Wh → kWh' },
+        { value: 'kwh_wh',             label: 'kWh → Wh' },
+        { value: 'w_kw',               label: 'W → kW' },
+        { value: 'kw_w',               label: 'kW → W' },
+        { value: 'fahrenheit_celsius', label: '°F → °C' },
+        { value: 'celsius_fahrenheit', label: '°C → °F' },
+        { value: 'kelvin_celsius',     label: 'K → °C' },
+        { value: 'celsius_kelvin',     label: '°C → K' },
+        { value: 'ms_kmh',             label: 'm/s → km/h' },
+        { value: 'kmh_ms',             label: 'km/h → m/s' },
+        { value: 'percent_fraction',   label: '% → 0–1' },
+        { value: 'fraction_percent',   label: '0–1 → %' },
+        { value: 'custom',             label: 'Eigene Formel' }
+    ];
+
+    var _onChange;
+
+    function buildConversionSelect(selected) {
+        var html = '<select class="conv-select">';
+        CONVERSIONS.forEach(function(c) {
+            html += '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function addRow(rule) {
+        rule = rule || { enabled: true, sourceId: '', conversion: 'custom', customFormula: '', targetId: '', unit: '' };
+        var tbody = document.getElementById('rules-body');
+        var tr = document.createElement('tr');
+
+        var showFormula = rule.conversion === 'custom';
+
+        tr.innerHTML =
+            '<td style="text-align:center"><input type="checkbox" class="chk-enabled"' + (rule.enabled ? ' checked' : '') + ' /></td>' +
+            '<td><input type="text" class="inp-source" placeholder="z.B. hm-rpc.0.ABC.1.TEMP" value="' + escHtml(rule.sourceId) + '" /></td>' +
+            '<td>' + buildConversionSelect(rule.conversion) + '</td>' +
+            '<td><input type="text" class="inp-formula" placeholder="z.B. value * 0.001" value="' + escHtml(rule.customFormula) + '" style="display:' + (showFormula ? 'block' : 'none') + '" /></td>' +
+            '<td><input type="text" class="inp-target" placeholder="z.B. converted.temp" value="' + escHtml(rule.targetId) + '" /></td>' +
+            '<td><input type="text" class="inp-unit" placeholder="z.B. kWh" value="' + escHtml(rule.unit) + '" /></td>' +
+            '<td class="row-actions"><button class="btn btn-del" type="button">✕</button></td>';
+
+        tbody.appendChild(tr);
+
+        // Show/hide formula input when conversion changes
+        var convSel = tr.querySelector('.conv-select');
+        var formulaInp = tr.querySelector('.inp-formula');
+        convSel.addEventListener('change', function() {
+            formulaInp.style.display = this.value === 'custom' ? 'block' : 'none';
+            if (_onChange) _onChange();
+        });
+
+        tr.querySelector('.btn-del').addEventListener('click', function() {
+            tbody.removeChild(tr);
+            if (_onChange) _onChange();
+        });
+
+        // Fire onChange on any input change
+        ['change', 'input'].forEach(function(evt) {
+            tr.querySelectorAll('input, select').forEach(function(el) {
+                el.addEventListener(evt, function() { if (_onChange) _onChange(); });
+            });
+        });
+
+        return tr;
+    }
+
+    function escHtml(str) {
+        return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function getRules() {
+        var rules = [];
+        document.querySelectorAll('#rules-body tr').forEach(function(tr) {
+            rules.push({
+                enabled:       tr.querySelector('.chk-enabled').checked,
+                sourceId:      tr.querySelector('.inp-source').value.trim(),
+                conversion:    tr.querySelector('.conv-select').value,
+                customFormula: tr.querySelector('.inp-formula').value.trim(),
+                targetId:      tr.querySelector('.inp-target').value.trim(),
+                unit:          tr.querySelector('.inp-unit').value.trim()
+            });
+        });
+        return rules;
+    }
+
+    /* ---- ioBroker adapter settings API ---- */
+    function load(settings, onChange) {
+        _onChange = onChange;
+        var tbody = document.getElementById('rules-body');
+        tbody.innerHTML = '';
+        var rules = (settings && settings.rules) ? settings.rules : [];
+        if (rules.length === 0) { addRow(); }
+        else { rules.forEach(function(r) { addRow(r); }); }
+    }
+
+    function save(callback) {
+        callback({ rules: getRules() });
+    }
+
+    /* ---- Add-row button ---- */
+    document.getElementById('btn-add-row').addEventListener('click', function() {
+        addRow();
+        if (_onChange) _onChange();
+    });
+</script>
+</body>
+</html>
