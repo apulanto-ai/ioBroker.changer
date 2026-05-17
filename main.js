@@ -24,6 +24,10 @@ class Changer extends utils.Adapter {
             name: 'changer',
         });
 
+        // VPD: letzte bekannte Eingangsewerte zwischenspeichern
+        this._vpdTemp = null;
+        this._vpdHum  = null;
+
         this.on('ready',              this.onReady.bind(this));
         this.on('stateChange',        this.onStateChange.bind(this));
         this.on('foreignStateChange', this.onForeignStateChange.bind(this));
@@ -31,13 +35,8 @@ class Changer extends utils.Adapter {
     }
 
     async onReady() {
-        const rules = this.config.rules || [];
+        const rules      = this.config.rules || [];
         const activeRules = rules.filter(r => r.enabled && r.sourceId && r.targetId);
-
-        if (activeRules.length === 0) {
-            this.log.info('Keine aktiven Umrechnungsregeln konfiguriert.');
-            return;
-        }
 
         for (const rule of activeRules) {
             await this._ensureTargetObject(rule);
@@ -45,8 +44,14 @@ class Changer extends utils.Adapter {
             this.log.debug(`Abonniert: "${rule.sourceId}" → "${this.namespace}.${rule.targetId}"`);
         }
 
-        this.log.info(`${activeRules.length} Regel(n) aktiv.`);
+        if (activeRules.length > 0) {
+            this.log.info(`${activeRules.length} Umrechnungsregel(n) aktiv.`);
+        }
+
+        await this._initVpd();
     }
+
+    // ── Umrechnung ────────────────────────────────────────────────────────────
 
     async _ensureTargetObject(rule) {
         await this.setObjectNotExistsAsync(rule.targetId, {
@@ -66,27 +71,6 @@ class Changer extends utils.Adapter {
         });
     }
 
-    async onForeignStateChange(id, state) {
-        if (!state) return;
-
-        const rules = (this.config.rules || []).filter(
-            r => r.enabled && r.sourceId === id,
-        );
-
-        for (const rule of rules) {
-            const result = this._applyConversion(rule, state.val);
-            if (result === null) continue;
-
-            await this.setStateAsync(rule.targetId, { val: result, ack: true });
-            this.log.debug(`${id} = ${state.val} → ${rule.targetId} = ${result}`);
-        }
-    }
-
-    onStateChange(id, state) {
-        // Eigene States werden nicht verarbeitet
-        void id; void state;
-    }
-
     _applyConversion(rule, value) {
         if (value === null || value === undefined || typeof value !== 'number') {
             this.log.warn(`Überspringe Regel "${rule.targetId}": Wert ist kein numerischer Wert (${JSON.stringify(value)})`);
@@ -99,7 +83,6 @@ class Changer extends utils.Adapter {
                     this.log.warn(`Regel "${rule.targetId}": Eigene Formel ist leer.`);
                     return null;
                 }
-                // new Function begrenzt den Scope; "use strict" verhindert globalem Zugriff
                 const fn = new Function('value', 'Math', `"use strict"; return (${rule.customFormula});`);
                 const result = fn(value, Math);
                 if (typeof result !== 'number' || !isFinite(result)) {
@@ -121,6 +104,91 @@ class Changer extends utils.Adapter {
         }
     }
 
+    // ── VPD ──────────────────────────────────────────────────────────────────
+
+    async _initVpd() {
+        const cfg = this.config;
+        if (!cfg.vpdEnabled || !cfg.vpdTempId || !cfg.vpdHumId || !cfg.vpdTargetId) {
+            return;
+        }
+
+        await this.setObjectNotExistsAsync(cfg.vpdTargetId, {
+            type: 'state',
+            common: {
+                name:  'VPD (Sättigungsdefizit)',
+                type:  'number',
+                role:  'value',
+                read:  true,
+                write: false,
+                unit:  'kPa',
+            },
+            native: {
+                tempId: cfg.vpdTempId,
+                humId:  cfg.vpdHumId,
+            },
+        });
+
+        await this.subscribeForeignStatesAsync(cfg.vpdTempId);
+        await this.subscribeForeignStatesAsync(cfg.vpdHumId);
+
+        // Startwerte einlesen damit sofort ein VPD berechnet werden kann
+        const tempState = await this.getForeignStateAsync(cfg.vpdTempId);
+        const humState  = await this.getForeignStateAsync(cfg.vpdHumId);
+
+        if (tempState && typeof tempState.val === 'number') this._vpdTemp = tempState.val;
+        if (humState  && typeof humState.val  === 'number') this._vpdHum  = humState.val;
+
+        await this._calculateAndWriteVpd();
+        this.log.info(`VPD-Berechnung aktiv: T="${cfg.vpdTempId}", RH="${cfg.vpdHumId}" → "${this.namespace}.${cfg.vpdTargetId}"`);
+    }
+
+    async _calculateAndWriteVpd() {
+        const T  = this._vpdTemp;
+        const RH = this._vpdHum;
+
+        if (typeof T !== 'number' || typeof RH !== 'number') return;
+        if (!isFinite(T) || !isFinite(RH)) return;
+
+        // Sättigungsdampfdruck (Magnus-Formel) in kPa
+        const svp = 0.6108 * Math.exp(17.27 * T / (T + 237.3));
+        // VPD = SVP * (1 – relative Feuchte)
+        const vpd = Math.round(svp * (1 - RH / 100) * 1000) / 1000;
+
+        await this.setStateAsync(this.config.vpdTargetId, { val: vpd, ack: true });
+        this.log.debug(`VPD: T=${T}°C, RH=${RH}% → SVP=${svp.toFixed(4)} kPa → VPD=${vpd} kPa`);
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+
+    async onForeignStateChange(id, state) {
+        if (!state) return;
+
+        // Umrechnungsregeln
+        const rules = (this.config.rules || []).filter(r => r.enabled && r.sourceId === id);
+        for (const rule of rules) {
+            const result = this._applyConversion(rule, state.val);
+            if (result === null) continue;
+            await this.setStateAsync(rule.targetId, { val: result, ack: true });
+            this.log.debug(`${id} = ${state.val} → ${rule.targetId} = ${result}`);
+        }
+
+        // VPD
+        const cfg = this.config;
+        if (cfg.vpdEnabled && cfg.vpdTempId && cfg.vpdHumId) {
+            if (id === cfg.vpdTempId && typeof state.val === 'number') {
+                this._vpdTemp = state.val;
+                await this._calculateAndWriteVpd();
+            } else if (id === cfg.vpdHumId && typeof state.val === 'number') {
+                this._vpdHum = state.val;
+                await this._calculateAndWriteVpd();
+            }
+        }
+    }
+
+    onStateChange(id, state) {
+        void id; void state;
+    }
+
     onUnload(callback) {
         try {
             callback();
@@ -131,7 +199,6 @@ class Changer extends utils.Adapter {
 }
 
 if (require.main !== module) {
-    // Compact mode export
     module.exports = (options) => new Changer(options);
 } else {
     new Changer();

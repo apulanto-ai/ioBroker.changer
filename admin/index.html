@@ -7,53 +7,116 @@
     <style>
         body { font-family: Arial, sans-serif; font-size: 14px; margin: 0; }
         #wrapper { padding: 10px; }
-        h2 { font-size: 16px; margin-bottom: 10px; }
+
+        /* ── Tabs ── */
+        .tab-nav { display: flex; border-bottom: 2px solid #1976d2; margin-bottom: 14px; }
+        .tab-btn {
+            padding: 8px 20px; cursor: pointer; border: none; background: #f0f0f0;
+            border-radius: 4px 4px 0 0; margin-right: 4px; font-size: 14px;
+            border: 1px solid #ccc; border-bottom: none; color: #444;
+        }
+        .tab-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Regeln-Tabelle ── */
+        h2 { font-size: 15px; margin: 0 0 8px; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: middle; }
         th { background: #f5f5f5; font-weight: bold; text-align: left; }
         tr:nth-child(even) { background: #fafafa; }
         select, input[type=text] { width: 100%; box-sizing: border-box; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; }
-        input[type=checkbox] { width: auto; }
+        input[type=checkbox] { width: auto; cursor: pointer; }
         .btn { padding: 5px 12px; cursor: pointer; border-radius: 3px; border: 1px solid #888; background: #e8e8e8; margin: 2px; }
         .btn-add { background: #4caf50; color: #fff; border-color: #388e3c; }
         .btn-del { background: #f44336; color: #fff; border-color: #c62828; padding: 2px 8px; }
-        .row-actions { text-align: center; white-space: nowrap; }
+        .row-actions { text-align: center; }
         #btn-add-row { margin-top: 8px; }
-        .formula-cell { display: none; }
+        .hint { font-size: 12px; color: #666; margin: 6px 0; }
+
+        /* ── VPD-Tab ── */
+        .vpd-form { max-width: 560px; }
+        .vpd-form table { width: 100%; }
+        .vpd-form td:first-child { width: 180px; font-weight: bold; white-space: nowrap; }
+        .vpd-form td input[type=text] { padding: 4px 6px; }
+        .vpd-info {
+            background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px;
+            padding: 10px 14px; margin-top: 14px; font-size: 13px; line-height: 1.6;
+        }
+        .vpd-info code { background: #fff; padding: 1px 4px; border-radius: 3px; font-family: monospace; }
     </style>
 </head>
 <body>
 <div id="wrapper">
-    <h2>Umrechnungsregeln</h2>
-    <p style="font-size:12px;color:#666;">Jede Zeile definiert eine Umrechnung. Die Quell-State-ID muss die vollständige ioBroker-State-ID sein (z.B. <em>hm-rpc.0.ABC.1.TEMPERATURE</em>). Die Ziel-State-ID ist relativ zur Instanz (z.B. <em>converted.temperature</em>).</p>
 
-    <table id="rules-table">
-        <thead>
-            <tr>
-                <th style="width:50px">Aktiv</th>
-                <th>Quell-State-ID</th>
-                <th style="width:160px">Umrechnung</th>
-                <th>Eigene Formel</th>
-                <th>Ziel-State-ID</th>
-                <th style="width:70px">Einheit</th>
-                <th style="width:50px"></th>
-            </tr>
-        </thead>
-        <tbody id="rules-body">
-        </tbody>
-    </table>
+    <!-- Tab-Navigation -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="rules">Umrechnungsregeln</button>
+        <button class="tab-btn"        data-tab="vpd">VPD Berechnung</button>
+    </div>
 
-    <button class="btn btn-add" id="btn-add-row">+ Regel hinzufügen</button>
+    <!-- ── Tab 1: Umrechnungsregeln ── -->
+    <div id="tab-rules" class="tab-content active">
+        <h2>Umrechnungsregeln</h2>
+        <p class="hint">Jede Zeile definiert eine Umrechnung. Quell-State-ID = vollständige ioBroker-ID (z.B. <em>hm-rpc.0.ABC.1.TEMPERATURE</em>). Ziel-State-ID ist relativ zur Instanz (z.B. <em>converted.temperature</em>).</p>
 
-    <p style="margin-top:16px;font-size:12px;color:#666;">
-        <strong>Formel-Beispiele:</strong>
-        value / 1000 &nbsp;|&nbsp;
-        Math.round(value * 10) / 10 &nbsp;|&nbsp;
-        value &gt; 0 ? value : 0
-    </p>
-</div>
+        <table id="rules-table">
+            <thead>
+                <tr>
+                    <th style="width:50px">Aktiv</th>
+                    <th>Quell-State-ID</th>
+                    <th style="width:160px">Umrechnung</th>
+                    <th>Eigene Formel</th>
+                    <th>Ziel-State-ID</th>
+                    <th style="width:70px">Einheit</th>
+                    <th style="width:40px"></th>
+                </tr>
+            </thead>
+            <tbody id="rules-body"></tbody>
+        </table>
+        <button class="btn btn-add" id="btn-add-row">+ Regel hinzufügen</button>
+        <p class="hint" style="margin-top:12px"><strong>Formel-Beispiele:</strong> value / 1000 &nbsp;|&nbsp; Math.round(value * 10) / 10 &nbsp;|&nbsp; value &gt; 0 ? value : 0</p>
+    </div>
+
+    <!-- ── Tab 2: VPD Berechnung ── -->
+    <div id="tab-vpd" class="tab-content">
+        <h2>VPD Berechnung (Vapor Pressure Deficit)</h2>
+
+        <div class="vpd-form">
+            <table>
+                <tr>
+                    <td>Aktiv</td>
+                    <td><input type="checkbox" id="vpd-enabled" /></td>
+                </tr>
+                <tr>
+                    <td>Temperatur-State-ID</td>
+                    <td><input type="text" id="vpd-temp" placeholder="z.B. hm-rpc.0.ABC.1.TEMPERATURE" /></td>
+                </tr>
+                <tr>
+                    <td>Luftfeuchtigkeits-State-ID</td>
+                    <td><input type="text" id="vpd-hum" placeholder="z.B. hm-rpc.0.ABC.1.HUMIDITY" /></td>
+                </tr>
+                <tr>
+                    <td>Ziel-State-ID (relativ)</td>
+                    <td><input type="text" id="vpd-target" placeholder="z.B. vpd" /></td>
+                </tr>
+            </table>
+
+            <div class="vpd-info">
+                <strong>Formel (Magnus-Approximation):</strong><br />
+                <code>SVP = 0,6108 · e^(17,27 · T / (T + 237,3))</code> &nbsp;[kPa]<br />
+                <code>VPD = SVP · (1 − RH / 100)</code> &nbsp;[kPa]<br /><br />
+                <strong>Eingangswerte:</strong> Temperatur in <strong>°C</strong>, Luftfeuchtigkeit in <strong>% (0–100)</strong>.<br />
+                Der berechnete VPD-State erscheint unter <em>changer.&lt;instanz&gt;.&lt;Ziel-State-ID&gt;</em> in der Einheit <strong>kPa</strong>.<br /><br />
+                <strong>Richtwerte:</strong> &lt; 0,4 kPa = zu feucht &nbsp;|&nbsp; 0,8–1,2 kPa = optimal &nbsp;|&nbsp; &gt; 1,6 kPa = Trockenstress
+            </div>
+        </div>
+    </div>
+
+</div><!-- /wrapper -->
 
 <script>
+    /* ───────────────────────────── Konversionen ────────────────────────────── */
     var CONVERSIONS = [
         { value: 'wh_kwh',             label: 'Wh → kWh' },
         { value: 'kwh_wh',             label: 'kWh → Wh' },
@@ -72,59 +135,64 @@
 
     var _onChange;
 
+    /* ───────────────────────────── Tab-Logik ───────────────────────────────── */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    /* ───────────────────────────── Regelzeile ──────────────────────────────── */
     function buildConversionSelect(selected) {
         var html = '<select class="conv-select">';
         CONVERSIONS.forEach(function(c) {
             html += '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
         });
-        html += '</select>';
-        return html;
+        return html + '</select>';
     }
 
     function addRow(rule) {
         rule = rule || { enabled: true, sourceId: '', conversion: 'custom', customFormula: '', targetId: '', unit: '' };
         var tbody = document.getElementById('rules-body');
         var tr = document.createElement('tr');
-
         var showFormula = rule.conversion === 'custom';
 
         tr.innerHTML =
             '<td style="text-align:center"><input type="checkbox" class="chk-enabled"' + (rule.enabled ? ' checked' : '') + ' /></td>' +
-            '<td><input type="text" class="inp-source" placeholder="z.B. hm-rpc.0.ABC.1.TEMP" value="' + escHtml(rule.sourceId) + '" /></td>' +
+            '<td><input type="text" class="inp-source" placeholder="z.B. hm-rpc.0.ABC.1.TEMP" value="' + esc(rule.sourceId) + '" /></td>' +
             '<td>' + buildConversionSelect(rule.conversion) + '</td>' +
-            '<td><input type="text" class="inp-formula" placeholder="z.B. value * 0.001" value="' + escHtml(rule.customFormula) + '" style="display:' + (showFormula ? 'block' : 'none') + '" /></td>' +
-            '<td><input type="text" class="inp-target" placeholder="z.B. converted.temp" value="' + escHtml(rule.targetId) + '" /></td>' +
-            '<td><input type="text" class="inp-unit" placeholder="z.B. kWh" value="' + escHtml(rule.unit) + '" /></td>' +
+            '<td><input type="text" class="inp-formula" placeholder="z.B. value * 0.001" value="' + esc(rule.customFormula) + '" style="display:' + (showFormula ? 'block' : 'none') + '" /></td>' +
+            '<td><input type="text" class="inp-target" placeholder="z.B. converted.temp" value="' + esc(rule.targetId) + '" /></td>' +
+            '<td><input type="text" class="inp-unit" placeholder="kWh" value="' + esc(rule.unit) + '" /></td>' +
             '<td class="row-actions"><button class="btn btn-del" type="button">✕</button></td>';
 
         tbody.appendChild(tr);
 
-        // Show/hide formula input when conversion changes
-        var convSel = tr.querySelector('.conv-select');
+        var convSel    = tr.querySelector('.conv-select');
         var formulaInp = tr.querySelector('.inp-formula');
+
         convSel.addEventListener('change', function() {
             formulaInp.style.display = this.value === 'custom' ? 'block' : 'none';
-            if (_onChange) _onChange();
+            notify();
         });
-
         tr.querySelector('.btn-del').addEventListener('click', function() {
             tbody.removeChild(tr);
-            if (_onChange) _onChange();
+            notify();
         });
-
-        // Fire onChange on any input change
-        ['change', 'input'].forEach(function(evt) {
-            tr.querySelectorAll('input, select').forEach(function(el) {
-                el.addEventListener(evt, function() { if (_onChange) _onChange(); });
-            });
+        tr.querySelectorAll('input, select').forEach(function(el) {
+            el.addEventListener('change', notify);
+            el.addEventListener('input',  notify);
         });
-
-        return tr;
     }
 
-    function escHtml(str) {
-        return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function esc(s) {
+        return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+
+    function notify() { if (_onChange) _onChange(); }
 
     function getRules() {
         var rules = [];
@@ -141,25 +209,42 @@
         return rules;
     }
 
-    /* ---- ioBroker adapter settings API ---- */
+    document.getElementById('btn-add-row').addEventListener('click', function() { addRow(); notify(); });
+
+    /* VPD-Felder onChange */
+    ['vpd-enabled','vpd-temp','vpd-hum','vpd-target'].forEach(function(id) {
+        var el = document.getElementById(id);
+        el.addEventListener('change', notify);
+        el.addEventListener('input',  notify);
+    });
+
+    /* ───────────────────────────── ioBroker API ────────────────────────────── */
     function load(settings, onChange) {
         _onChange = onChange;
+        settings = settings || {};
+
+        /* Regeln */
         var tbody = document.getElementById('rules-body');
         tbody.innerHTML = '';
-        var rules = (settings && settings.rules) ? settings.rules : [];
-        if (rules.length === 0) { addRow(); }
-        else { rules.forEach(function(r) { addRow(r); }); }
+        var rules = settings.rules || [];
+        if (rules.length === 0) { addRow(); } else { rules.forEach(addRow); }
+
+        /* VPD */
+        document.getElementById('vpd-enabled').checked       = !!settings.vpdEnabled;
+        document.getElementById('vpd-temp').value            = settings.vpdTempId   || '';
+        document.getElementById('vpd-hum').value             = settings.vpdHumId    || '';
+        document.getElementById('vpd-target').value          = settings.vpdTargetId || 'vpd';
     }
 
     function save(callback) {
-        callback({ rules: getRules() });
+        callback({
+            rules:       getRules(),
+            vpdEnabled:  document.getElementById('vpd-enabled').checked,
+            vpdTempId:   document.getElementById('vpd-temp').value.trim(),
+            vpdHumId:    document.getElementById('vpd-hum').value.trim(),
+            vpdTargetId: document.getElementById('vpd-target').value.trim() || 'vpd'
+        });
     }
-
-    /* ---- Add-row button ---- */
-    document.getElementById('btn-add-row').addEventListener('click', function() {
-        addRow();
-        if (_onChange) _onChange();
-    });
 </script>
 </body>
 </html>
