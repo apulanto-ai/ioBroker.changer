@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "changer",
-    "version": "0.2.3",
+    "version": "0.2.7",
     "news": {
+      "0.2.7": {
+        "en": "Robustness improvements: extendObjectAsync for live config updates, split try-catch for custom formulas",
+        "de": "Robustheit verbessert: extendObjectAsync für Live-Konfigurations-Updates, getrennter try-catch für eigene Formeln"
+      },
       "0.2.3": {
         "en": "Load socket.io client before adapter-settings.js",
         "de": "Socket.io-Client vor adapter-settings.js laden"
