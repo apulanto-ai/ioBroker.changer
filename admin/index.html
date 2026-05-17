@@ -82,6 +82,11 @@
         #picker-list li.empty { color: #999; cursor: default; font-family: inherit; }
         #picker-footer { margin-top: 10px; text-align: right; }
         #picker-loading { color: #888; font-style: italic; text-align: center; padding: 20px; }
+        #picker-create { display: none; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; }
+        #picker-create label { font-size: 12px; color: #555; }
+        #picker-create-row { display: flex; gap: 4px; margin-top: 4px; }
+        #picker-new-name { flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; }
+        #picker-create-msg { font-size: 11px; margin-top: 4px; min-height: 14px; }
     </style>
 </head>
 <body>
@@ -93,6 +98,14 @@
         <input type="text" id="picker-search" placeholder="Filtern… (z.B. hm-rpc, temperature, 0.TEMP)" autocomplete="off" />
         <div id="picker-count"></div>
         <ul id="picker-list"><li id="picker-loading">States werden geladen…</li></ul>
+        <div id="picker-create">
+            <label>Neuen State anlegen <span id="picker-ns-hint" style="font-family:monospace"></span>:</label>
+            <div id="picker-create-row">
+                <input type="text" id="picker-new-name" placeholder="z.B. converted.temperature" autocomplete="off" />
+                <button class="btn btn-add" id="picker-create-btn" type="button">+ Anlegen</button>
+            </div>
+            <div id="picker-create-msg"></div>
+        </div>
         <div id="picker-footer">
             <button class="btn" id="picker-cancel">Abbrechen</button>
         </div>
@@ -161,7 +174,12 @@
                 </tr>
                 <tr>
                     <td>Ziel-State-ID (relativ)</td>
-                    <td><input type="text" id="vpd-target" placeholder="vpd" style="width:100%;max-width:220px" /></td>
+                    <td>
+                        <div class="state-input-wrap" style="max-width:340px">
+                            <input type="text" id="vpd-target" placeholder="vpd" />
+                            <button class="btn btn-pick" type="button" onclick="_openTargetPickerForInput(document.getElementById('vpd-target'))">⋯</button>
+                        </div>
+                    </td>
                 </tr>
             </table>
             <div class="vpd-info">
@@ -283,6 +301,11 @@ function _renderList(filter) {
 function _closePicker() {
     document.getElementById('picker-overlay').classList.remove('open');
     _pickerTarget = null;
+    _currentDirectInput = null;
+    _pickerMode = 'source';
+    document.getElementById('picker-title').textContent = 'State auswählen';
+    document.getElementById('picker-create').style.display = 'none';
+    document.getElementById('picker-create-msg').textContent = '';
 }
 
 document.getElementById('picker-search').addEventListener('input', function() { _renderList(this.value); });
@@ -291,6 +314,88 @@ document.getElementById('picker-overlay').addEventListener('click', function(e) 
     if (e.target === this) _closePicker();
 });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') _closePicker(); });
+
+// ── Adapter-Namespace aus URL ermitteln ─────────────────────────────────────
+var _adapterInstance  = (new URLSearchParams(window.location.search).get('instance') || '0');
+var _adapterNamespace = 'changer.' + _adapterInstance + '.';
+
+// ── Target-Picker (gefiltert auf changer.* + Anlegen-Option) ────────────────
+var _pickerMode = 'source'; // 'source' | 'target'
+
+function _openTargetPickerForInput(inputEl) {
+    _pickerMode = 'target';
+    _currentDirectInput = inputEl;
+
+    document.getElementById('picker-title').textContent = 'Ziel-State auswählen oder neu anlegen';
+    document.getElementById('picker-create').style.display = 'block';
+    document.getElementById('picker-ns-hint').textContent = '(' + _adapterNamespace + '…)';
+    document.getElementById('picker-new-name').value = inputEl.value || '';
+    document.getElementById('picker-create-msg').textContent = '';
+    document.getElementById('picker-create-msg').style.color = '';
+
+    var overlay = document.getElementById('picker-overlay');
+    overlay.classList.add('open');
+    var search = document.getElementById('picker-search');
+    search.value = '';
+
+    if (!_statesLoaded) {
+        document.getElementById('picker-list').innerHTML = '<li id="picker-loading">States werden geladen…</li>';
+        _loadStates(function() { _renderList(''); });
+    } else {
+        _renderList('');
+    }
+    setTimeout(function() { document.getElementById('picker-new-name').focus(); }, 50);
+}
+
+document.getElementById('picker-create-btn').addEventListener('click', function() {
+    var relName = document.getElementById('picker-new-name').value.trim();
+    var msgEl   = document.getElementById('picker-create-msg');
+    if (!relName) { msgEl.textContent = 'Bitte einen Namen eingeben.'; msgEl.style.color = '#f44336'; return; }
+    if (/[^a-zA-Z0-9._\-]/.test(relName)) {
+        msgEl.textContent = 'Ungültige Zeichen (erlaubt: Buchstaben, Zahlen, Punkt, Bindestrich, Unterstrich).';
+        msgEl.style.color = '#f44336';
+        return;
+    }
+
+    var fullId = _adapterNamespace + relName;
+    var s = _getSocket();
+    if (!s) { msgEl.textContent = 'Kein Socket – bitte Seite neu laden.'; msgEl.style.color = '#f44336'; return; }
+
+    var obj = {
+        type: 'state',
+        common: { name: relName, type: 'number', role: 'value', read: true, write: false, unit: '' },
+        native: {}
+    };
+
+    msgEl.textContent = 'Wird angelegt…'; msgEl.style.color = '#888';
+
+    function onDone(err) {
+        if (err) {
+            msgEl.textContent = 'Fehler: ' + err; msgEl.style.color = '#f44336';
+        } else {
+            if (_allStateIds.indexOf(fullId) === -1) { _allStateIds.push(fullId); _allStateIds.sort(); }
+            if (_currentDirectInput) {
+                _currentDirectInput.value = relName;
+                _currentDirectInput.dispatchEvent(new Event('input', { bubbles: true }));
+                notify();
+            }
+            msgEl.textContent = '✓ Angelegt: ' + fullId; msgEl.style.color = '#4caf50';
+            setTimeout(_closePicker, 1200);
+        }
+    }
+
+    if (typeof s.setObject === 'function') {
+        s.setObject(fullId, obj, onDone);
+    } else if (typeof s.emit === 'function') {
+        s.emit('setObject', fullId, obj, onDone);
+    } else {
+        msgEl.textContent = 'Socket-API nicht erkannt.'; msgEl.style.color = '#f44336';
+    }
+});
+
+document.getElementById('picker-new-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('picker-create-btn').click();
+});
 
 /* ════════════════════════════════════════════════════
    Tabs
@@ -354,7 +459,7 @@ function addRow(rule) {
         '</div></td>' +
         '<td>' + _buildSelect(rule.conversion) + '</td>' +
         '<td><input type="text" class="inp-formula" placeholder="value * 0.001" value="' + _esc(rule.customFormula) + '" style="width:100%;display:' + (showF ? 'block' : 'none') + '" /></td>' +
-        '<td><input type="text" class="inp-target" placeholder="converted.x" value="' + _esc(rule.targetId) + '" style="width:100%" /></td>' +
+        '<td><div class="state-input-wrap"><input type="text" class="inp-target" placeholder="converted.x" value="' + _esc(rule.targetId) + '" /><button class="btn btn-pick" type="button" data-pick="target">⋯</button></div></td>' +
         '<td><input type="text" class="inp-unit" placeholder="kWh" value="' + _esc(rule.unit) + '" style="width:100%" /></td>' +
         '<td class="row-actions"><button class="btn btn-del" type="button">✕</button></td>';
 
@@ -363,8 +468,14 @@ function addRow(rule) {
     // Picker-Button für Quell-State
     var srcInp = tr.querySelector('.inp-source');
     tr.querySelector('[data-pick="source"]').addEventListener('click', function() {
-        _pickerTarget = null; // wird über srcInp gesetzt
+        _pickerTarget = null;
         _openPickerForInput(srcInp);
+    });
+
+    // Picker-Button für Ziel-State
+    var tgtInp = tr.querySelector('.inp-target');
+    tr.querySelector('[data-pick="target"]').addEventListener('click', function() {
+        _openTargetPickerForInput(tgtInp);
     });
 
     // Formel ein-/ausblenden
@@ -388,73 +499,69 @@ function addRow(rule) {
     });
 }
 
-// Variante: Picker direkt mit einem Input-Element (nicht per id)
+// Quell-State-Picker (alle ioBroker-States)
+var _currentDirectInput = null;
 function _openPickerForInput(inputEl) {
-    _pickerTarget = '__direct__';
+    _pickerMode = 'source';
+    _currentDirectInput = inputEl;
     var overlay = document.getElementById('picker-overlay');
     overlay.classList.add('open');
     var search = document.getElementById('picker-search');
     search.value = inputEl.value || '';
 
-    // Wenn Item gewählt wird, füllen wir inputEl direkt
-    document.getElementById('picker-list')._targetInput = inputEl;
-
     if (!_statesLoaded) {
         document.getElementById('picker-list').innerHTML = '<li id="picker-loading">States werden geladen…</li>';
-        _loadStates(function() { _renderListDirect(search.value, inputEl); });
+        _loadStates(function() { _renderList(search.value); });
     } else {
-        _renderListDirect(search.value, inputEl);
+        _renderList(search.value);
     }
     setTimeout(function() { search.focus(); search.select(); }, 50);
 }
 
-// Überschreibe _renderList um inputEl zu unterstützen
-var _currentDirectInput = null;
-function _renderListDirect(filter, inputEl) {
-    _currentDirectInput = inputEl || null;
-    _renderList(filter);
-}
-
-// Patch: beim Klick auf ein li den direkten Input befüllen
+// Patch: beim Klick auf ein li den direkten Input befüllen + Target-Modus-Filter
 (function() {
-    var origRender = _renderList;
     _renderList = function(filter) {
+        var isTarget = (_pickerMode === 'target');
         var list = document.getElementById('picker-list');
         var f = (filter || '').toLowerCase();
         var tokens = f.split(/\s+/).filter(Boolean);
-        var matches = _allStateIds.filter(function(id) {
+
+        var pool = isTarget
+            ? _allStateIds.filter(function(id) { return id.indexOf(_adapterNamespace) === 0; })
+            : _allStateIds;
+
+        var matches = pool.filter(function(id) {
             if (!tokens.length) return true;
             var lower = id.toLowerCase();
             return tokens.every(function(t) { return lower.indexOf(t) !== -1; });
         });
         var shown = matches.slice(0, 300);
+        var label = isTarget ? 'bestehende Ziel-State(s)' : 'State(s)';
         document.getElementById('picker-count').textContent =
-            matches.length + ' State(s) gefunden' + (matches.length > 300 ? ' (erste 300 angezeigt)' : '');
+            matches.length + ' ' + label + ' gefunden' + (matches.length > 300 ? ' (erste 300)' : '');
+
         list.innerHTML = '';
         if (shown.length === 0) {
-            list.innerHTML = '<li class="empty">Keine Treffer – Suchbegriff ändern</li>';
+            list.innerHTML = '<li class="empty">' + (isTarget ? 'Noch kein Ziel-State vorhanden – unten neu anlegen.' : 'Keine Treffer – Suchbegriff ändern') + '</li>';
             return;
         }
         shown.forEach(function(id) {
             var li = document.createElement('li');
-            li.textContent = id;
+            var displayId = isTarget ? id.slice(_adapterNamespace.length) : id;
+            li.textContent = isTarget ? displayId + '  (' + id + ')' : id;
             li.addEventListener('click', function() {
                 var inp = _currentDirectInput || (_pickerTarget ? document.getElementById(_pickerTarget) : null);
                 if (inp) {
-                    inp.value = id;
+                    inp.value = displayId;
                     inp.dispatchEvent(new Event('input', { bubbles: true }));
                     notify();
                 }
-                _currentDirectInput = null;
                 _closePicker();
             });
             list.appendChild(li);
         });
     };
 })();
-
-// Picker-Search neu verdrahten nach Überschreibung
-document.getElementById('picker-search').addEventListener('input', function() { _renderList(this.value); });
 
 function getRules() {
     var rules = [];
