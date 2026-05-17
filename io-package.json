@@ -31,7 +31,7 @@
     "platform": "Javascript/Node.js",
     "main": "main.js",
     "enabled": true,
-    "readme": "https://github.com/apulanto-ai/iobroker-changer/blob/main/README.md",
+    "readme": "https://github.com/apulanto-ai/ioBroker.changer/blob/master/README.md",
     "loglevel": "info",
     "mode": "daemon",
     "type": "general",
